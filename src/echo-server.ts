@@ -1,4 +1,5 @@
 import { HttpSubscriber, RedisSubscriber, Subscriber } from './subscribers';
+import { RedisConnector } from './connectors';
 import { Channel } from './channels';
 import { Server } from './server';
 import { HttpApi } from './api';
@@ -76,6 +77,13 @@ export class EchoServer {
     private subscribers: Subscriber[];
 
     /**
+     * Redis connector.
+     *
+     * @type {RedisConnector}
+     */
+    private redis: RedisConnector;
+
+    /**
      * Http api instance.
      *
      * @type {HttpApi}
@@ -126,6 +134,8 @@ export class EchoServer {
             this.httpApi = new HttpApi(io, this.channel, this.server.express, this.options.apiOriginAllow);
             this.httpApi.init();
 
+            this.redis = new RedisConnector(this.options);
+
             this.onConnect();
             this.listen().then(() => resolve(), err => Log.error(err));
         });
@@ -137,7 +147,7 @@ export class EchoServer {
      * @return {void}
      */
     startup(): void {
-        Log.title(`\nL A R A V E L  E C H O  S E R V E R\n`);
+        Log.title(`\nL A R A V E L  E C H O  S E R V E R (JIT Version)\n`);
         Log.info(`version ${packageFile.version}\n`);
 
         if (this.options.devMode) {
@@ -281,6 +291,18 @@ export class EchoServer {
     onClientEvent(socket: any): void {
         socket.on('client event', data => {
             this.channel.clientEvent(socket, data);
+        });
+    }
+
+    /**
+     * On custom client events.
+     *
+     * @param  {object} socket
+     * @return {void}
+     */
+    onCustomClientEvent(socket: any): void {
+        socket.on('custom client event', data => {
+            this.channel.customClientEvent(socket, data);
         });
     }
 }

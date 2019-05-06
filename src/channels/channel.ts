@@ -81,6 +81,35 @@ export class Channel {
     }
 
     /**
+     * Trigger a custom client message
+     *
+     * @param  {object} redis
+     * @param  {object} socket
+     * @param  {object} data
+     * @return {void}
+     */
+    customClientEvent(redis, socket, data): void {
+        if (data.event && data.channel) {
+            if (this.isClientEvent(data.event) &&
+                this.isPrivate(data.channel) &&
+                this.isInChannel(socket, data.channel)) {
+
+                // If action is whisper, act as regular client event
+                if(data.action == 'whisper') {
+                    this.io.sockets.connected[socket.id]
+                        .broadcast.to(data.channel)
+                        .emit(data.event, data.channel, data.data);
+                }
+
+                // If action is persist, store the data in specified Redis key
+                else if(data.action == 'persist') {
+                    redis.persist(data.key, data.member, data.data);
+                }
+            }
+        }
+    }
+
+    /**
      * Leave a channel.
      *
      * @param  {object} socket
