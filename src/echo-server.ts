@@ -302,7 +302,9 @@ export class EchoServer {
      */
     onCustomClientEvent(socket: any): void {
         socket.on('custom client event', data => {
-            this.channel.customClientEvent(socket, data);
+            if(this.redis) {
+                this.channel.customClientEvent(this.redis, socket, data);
+            }
         });
     }
 }
